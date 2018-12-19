@@ -18,12 +18,9 @@ namespace SampleModule
     class ImageInference
     {
         // globals
-        private static LearningModelDeviceKind _deviceKind = LearningModelDeviceKind.Default;
-        private static string _deviceName = "default";
-        private static string _modelPath;
-        private static string _imagePath;
-        private static string _labelsFileName = "Labels.json";
-        private static List<string> _labels = new List<string>();
+        private static readonly LearningModelDeviceKind _deviceKind = LearningModelDeviceKind.Default;
+        private static readonly string _deviceName = "default";
+        private static readonly string _labelsFileName = "Labels.json";
         private static AppOptions Options;
 
         static async Task<int> Main(string[] args)
@@ -89,19 +86,6 @@ namespace SampleModule
                 return -1;
             }
         }
-
-        private static void LoadLabels()
-        {
-            // Parse labels from label json file.  We know the file's 
-            // entries are already sorted in order.
-            var fileString = File.ReadAllText(_labelsFileName);
-            var fileDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(fileString);
-            foreach (var kvp in fileDict)
-            {
-                _labels.Add(kvp.Value);
-            }
-        }
-
         
         private static T AsyncHelper<T> (IAsyncOperation<T> operation) 
         {
@@ -116,8 +100,11 @@ namespace SampleModule
 
         private static void PrintResults(IReadOnlyList<float> resultVector)
         {
-            // load the labels
-            LoadLabels();
+            // Parse labels from label json file.  We know the file's entries are already sorted in order.
+            var fileString = File.ReadAllText(_labelsFileName);
+            var fileDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(fileString);
+            var labels = fileDict.Values.ToList();
+
             // Find the top 3 probabilities
             List<float> topProbabilities = new List<float>() { 0.0f, 0.0f, 0.0f };
             List<int> topProbabilityLabelIndexes = new List<int>() { 0, 0, 0 };
@@ -137,7 +124,7 @@ namespace SampleModule
             }
             for (int i = 0; i < 3; i++)
             {
-                Console.WriteLine($"\"{ _labels[topProbabilityLabelIndexes[i]]}\" with confidence of { topProbabilities[i]}");
+                Console.WriteLine($"\"{ labels[topProbabilityLabelIndexes[i]]}\" with confidence of { topProbabilities[i]}");
             }
         }
     }
