@@ -7,7 +7,7 @@ using Windows.Storage.Streams;
 using Windows.AI.MachineLearning;
 using static Helpers.AsyncHelper;
 
-namespace SqueezeNetObjectDetectionNC
+namespace SampleModule
 {
     
     public sealed class SqueezeNetInput

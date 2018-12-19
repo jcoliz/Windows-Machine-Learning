@@ -12,7 +12,7 @@ using Windows.Foundation;
 using Windows.Media;
 using Newtonsoft.Json;
 
-namespace SqueezeNetObjectDetectionNC
+namespace SampleModule
 {
     class ImageInference
     {
@@ -22,87 +22,61 @@ namespace SqueezeNetObjectDetectionNC
         private static string _modelPath;
         private static string _imagePath;
         private static string _labelsFileName = "Labels.json";
-        private static LearningModel _model = null;
-        private static LearningModelSession _session;
         private static List<string> _labels = new List<string>();
+        private static AppOptions Options;
 
         private static SqueezeNetModel __model = null;
 
         // usage: SqueezeNet [modelfile] [imagefile] [cpu|directx]
         static async Task<int> Main(string[] args)
         {
-            if (!ParseArgs(args))
+            try
             {
-                Console.WriteLine("Usage: [executable_name] [modelfile] [imagefile] [cpu|directx]");
+                //
+                // Parse options
+                //
+
+                Options = new AppOptions();
+
+                Options.Parse(args);
+
+                if (Options.Exit)
+                    return -1;
+                
+                // Load and create the model 
+                Console.WriteLine($"Loading modelfile '{Options.ModelPath}' on the '{_deviceName}' device");
+
+                int ticks = Environment.TickCount;
+
+                StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ModelPath));
+                __model = await SqueezeNetModel.CreateFromStreamAsync(modelFile);
+                ticks = Environment.TickCount - ticks;
+                Console.WriteLine($"model file loaded in { ticks } ticks");
+
+                Console.WriteLine("Loading the image...");
+                ImageFeatureValue imageTensor = LoadImageFile();
+
+                Console.WriteLine("Running the model...");
+                ticks = Environment.TickCount;
+
+                var input = new SqueezeNetInput() { data_0 = imageTensor };
+                var outcome = await __model.EvaluateAsync(input);
+
+                ticks = Environment.TickCount - ticks;
+                Console.WriteLine($"model run took { ticks } ticks");
+
+                var resultTensor = outcome.softmaxout_1;
+
+                // retrieve results from evaluation
+                var resultVector = resultTensor.GetAsVectorView();
+                PrintResults(resultVector);
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{DateTime.Now.ToLocalTime()} ERROR: {ex.GetType().Name} {ex.Message}");
                 return -1;
             }
-
-            // Load and create the model 
-            Console.WriteLine($"Loading modelfile '{_modelPath}' on the '{_deviceName}' device");
-
-            int ticks = Environment.TickCount;
-
-            StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(_modelPath));
-            __model = await SqueezeNetModel.CreateFromStreamAsync(modelFile);
-            ticks = Environment.TickCount - ticks;
-            Console.WriteLine($"model file loaded in { ticks } ticks");
-
-            // _model = LearningModel.LoadFromFilePath(_modelPath);
-
-            // Create the evaluation session with the model and device
-            // _session = new LearningModelSession(_model, new LearningModelDevice(_deviceKind));
-
-            Console.WriteLine("Loading the image...");
-            ImageFeatureValue imageTensor = LoadImageFile();
-
-            // create a binding object from the session
-            //Console.WriteLine("Binding...");
-            //LearningModelBinding binding = new LearningModelBinding(_session);
-            //binding.Bind(_model.InputFeatures.ElementAt(0).Name, imageTensor);
-
-            Console.WriteLine("Running the model...");
-            ticks = Environment.TickCount;
-
-            var input = new SqueezeNetInput() { data_0 = imageTensor };
-            var outcome = await __model.EvaluateAsync(input);
-
-            //var results = _session.Evaluate(binding, "RunId");
-            ticks = Environment.TickCount - ticks;
-            Console.WriteLine($"model run took { ticks } ticks");
-
-            var resultTensor = outcome.softmaxout_1;
-
-            // retrieve results from evaluation
-            var resultVector = resultTensor.GetAsVectorView();
-            PrintResults(resultVector);
-            return 0;
-        }
-
-        static bool ParseArgs(string[] args)
-        {
-            if (args.Length < 2)
-            {
-                return false;
-            }
-            // get the model file
-            _modelPath = args[0];
-            // get the image file
-            _imagePath = args[1];
-            // did they pass a fourth arg?
-
-            if (args.Length > 2)
-            {
-                string deviceName = args[2];
-                if (deviceName == "cpu")
-                {
-                    _deviceKind = LearningModelDeviceKind.Cpu;
-                }
-                else if (deviceName == "directx")
-                {
-                    _deviceKind = LearningModelDeviceKind.DirectX;
-                }
-            }
-            return true;
         }
 
         private static void LoadLabels()
@@ -131,7 +105,7 @@ namespace SqueezeNetObjectDetectionNC
 
         private static ImageFeatureValue LoadImageFile()
         {
-            StorageFile imageFile = AsyncHelper(StorageFile.GetFileFromPathAsync(_imagePath));
+            StorageFile imageFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ImagePath));
             IRandomAccessStream stream = AsyncHelper(imageFile.OpenReadAsync());
             BitmapDecoder decoder = AsyncHelper(BitmapDecoder.CreateAsync(stream));
             SoftwareBitmap softwareBitmap = AsyncHelper(decoder.GetSoftwareBitmapAsync());
