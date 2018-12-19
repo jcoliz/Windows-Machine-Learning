@@ -7,9 +7,9 @@ namespace SampleModule
     public class AppOptions: OptionSet
     {
         public bool Help { get; private set; }
+        public bool ShowList { get; private set; }
 /*
         public string DeviceId { get; private set; }
-        public bool ShowList { get; private set; }
         public bool ShowConfig { get; private set; }
         public bool UseEdge { get; private set; }
         */
@@ -20,8 +20,8 @@ namespace SampleModule
         public AppOptions()
         {
             Add( "h|help", "show this message and exit", v => Help = v != null );
+            Add( "l|list", "list available cameras and exit", v => ShowList = v != null);
 /*
-            Add( "l|list", "list available devices and exit", v => ShowList = v != null);
             Add( "d|device=", "the {ID} of device to connect", v => DeviceId = v);
             Add( "e|edge", "transmit through azure edge", v => UseEdge = v != null);
             Add( "c|config", "display device configuration", v => ShowConfig = v != null);
@@ -34,12 +34,15 @@ namespace SampleModule
         {
             var result = base.Parse(args);
 
-            if (Help || string.IsNullOrEmpty(ModelPath) || string.IsNullOrEmpty(ImagePath) )
+            if (Help || ( !ShowList && ( string.IsNullOrEmpty(ModelPath) || string.IsNullOrEmpty(ImagePath)) ) )
             {
                 Console.WriteLine($"{AppName} {AppVersion}");
                 WriteOptionDescriptions(Console.Out);
                 Exit = true;
             }
+
+            if (ShowList)
+                Exit = true;
 
             return result;
         }

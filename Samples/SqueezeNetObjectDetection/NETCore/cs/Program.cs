@@ -35,6 +35,9 @@ namespace SampleModule
 
                 Options.Parse(args);
 
+                if (Options.ShowList)
+                    await Camera.EnumFrameSourcesAsync();
+
                 if (Options.Exit)
                     return -1;
 
