@@ -10,34 +10,35 @@ using static Helpers.AsyncHelper;
 namespace SampleModule
 {
     
-    public sealed class SqueezeNetInput
+    public sealed class ScoringInput
     {
         public ImageFeatureValue data_0; // shape(1,3,224,224)
     }
     
-    public sealed class SqueezeNetOutput
+    public sealed class ScoringOutput
     {
         public TensorFloat softmaxout_1; // shape(1,1000,1,1)
     }
     
-    public sealed class SqueezeNetModel
+    public sealed class ScoringModel
     {
         private LearningModel model;
         private LearningModelSession session;
         private LearningModelBinding binding;
-        public static async Task<SqueezeNetModel> CreateFromStreamAsync(IRandomAccessStreamReference stream)
+        public static async Task<ScoringModel> CreateFromStreamAsync(IRandomAccessStreamReference stream)
         {
-            SqueezeNetModel learningModel = new SqueezeNetModel();
+            ScoringModel learningModel = new ScoringModel();
             learningModel.model = await AsAsync( LearningModel.LoadFromStreamAsync(stream));
             learningModel.session = new LearningModelSession(learningModel.model);
             learningModel.binding = new LearningModelBinding(learningModel.session);
             return learningModel;
         }
-        public async Task<SqueezeNetOutput> EvaluateAsync(SqueezeNetInput input)
+        public async Task<ScoringOutput> EvaluateAsync(ScoringInput
+ input)
         {
             binding.Bind("data_0", input.data_0);
             var result = await AsAsync( session.EvaluateAsync(binding, "0") );
-            var output = new SqueezeNetOutput();
+            var output = new ScoringOutput();
             output.softmaxout_1 = result.Outputs["softmaxout_1"] as TensorFloat;
             return output;
         }

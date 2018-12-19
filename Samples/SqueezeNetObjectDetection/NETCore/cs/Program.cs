@@ -11,6 +11,7 @@ using Windows.AI.MachineLearning;
 using Windows.Foundation;
 using Windows.Media;
 using Newtonsoft.Json;
+using static Helpers.BlockTimerHelper;
 
 namespace SampleModule
 {
@@ -25,9 +26,6 @@ namespace SampleModule
         private static List<string> _labels = new List<string>();
         private static AppOptions Options;
 
-        private static SqueezeNetModel __model = null;
-
-        // usage: SqueezeNet [modelfile] [imagefile] [cpu|directx]
         static async Task<int> Main(string[] args)
         {
             try
@@ -42,33 +40,46 @@ namespace SampleModule
 
                 if (Options.Exit)
                     return -1;
-                
-                // Load and create the model 
-                Console.WriteLine($"Loading modelfile '{Options.ModelPath}' on the '{_deviceName}' device");
 
-                int ticks = Environment.TickCount;
+                //
+                // Load model
+                //
 
-                StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ModelPath));
-                __model = await SqueezeNetModel.CreateFromStreamAsync(modelFile);
-                ticks = Environment.TickCount - ticks;
-                Console.WriteLine($"model file loaded in { ticks } ticks");
+                ScoringModel __model = null;
+                await BlockTimer($"Loading modelfile '{Options.ModelPath}' on the '{_deviceName}' device",
+                    async () => {
+                        StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ModelPath));
+                        __model = await ScoringModel.CreateFromStreamAsync(modelFile);
+                    });
 
-                Console.WriteLine("Loading the image...");
-                ImageFeatureValue imageTensor = LoadImageFile();
+                //
+                // Load & process image
+                //
+            
+                StorageFile imageFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ImagePath));
+                IRandomAccessStream stream = AsyncHelper(imageFile.OpenReadAsync());
+                BitmapDecoder decoder = AsyncHelper(BitmapDecoder.CreateAsync(stream));
+                SoftwareBitmap softwareBitmap = AsyncHelper(decoder.GetSoftwareBitmapAsync());
+                softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+                VideoFrame inputImage = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap);
+                ImageFeatureValue imageTensor = ImageFeatureValue.CreateFromVideoFrame(inputImage);
 
-                Console.WriteLine("Running the model...");
-                ticks = Environment.TickCount;
+                //
+                // Evaluate model
+                //
 
-                var input = new SqueezeNetInput() { data_0 = imageTensor };
-                var outcome = await __model.EvaluateAsync(input);
+                ScoringOutput outcome = null;
+                await BlockTimer("Running the model",
+                    async () => {
+                        var input = new ScoringInput() { data_0 = imageTensor };
+                        outcome = await __model.EvaluateAsync(input);
+                    });
 
-                ticks = Environment.TickCount - ticks;
-                Console.WriteLine($"model run took { ticks } ticks");
+                //
+                // Print results
+                //
 
-                var resultTensor = outcome.softmaxout_1;
-
-                // retrieve results from evaluation
-                var resultVector = resultTensor.GetAsVectorView();
+                var resultVector = outcome.softmaxout_1.GetAsVectorView();
                 PrintResults(resultVector);
                 return 0;
             }
@@ -102,18 +113,6 @@ namespace SampleModule
             waitHandle.WaitOne();
             return operation.GetResults();
         }
-
-        private static ImageFeatureValue LoadImageFile()
-        {
-            StorageFile imageFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ImagePath));
-            IRandomAccessStream stream = AsyncHelper(imageFile.OpenReadAsync());
-            BitmapDecoder decoder = AsyncHelper(BitmapDecoder.CreateAsync(stream));
-            SoftwareBitmap softwareBitmap = AsyncHelper(decoder.GetSoftwareBitmapAsync());
-            softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-            VideoFrame inputImage = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap);
-            return ImageFeatureValue.CreateFromVideoFrame(inputImage);
-        }
-
 
         private static void PrintResults(IReadOnlyList<float> resultVector)
         {
