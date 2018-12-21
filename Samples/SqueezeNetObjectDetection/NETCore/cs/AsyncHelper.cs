@@ -15,14 +15,39 @@ namespace Helpers
             {
                 op.Completed += (o, s) =>
                 {
-                    result = o.GetResults();
                     AsyncMeSemaphore.Release();
                 };
+                // in case the op completes before the handler got connected we must check
+                // status and complete things before waiting
+                if (op.Status == AsyncStatus.Completed)
+                {
+                    AsyncMeSemaphore.Release();
+                }
                 await AsyncMeSemaphore.WaitAsync();
+                result = op.GetResults();
             }
 
             return result;
         }
+
+        public static async Task AsAsync(IAsyncAction op)
+        {
+            using (var AsyncMeSemaphore = new SemaphoreSlim(0, 1))
+            {
+                op.Completed += (o, s) =>
+                {
+                    AsyncMeSemaphore.Release();
+                };
+                // in case the op completes before the handler got connected we must check
+                // status and complete things before waiting
+                if (op.Status == AsyncStatus.Completed)
+                {
+                    AsyncMeSemaphore.Release();
+                }
+                await AsyncMeSemaphore.WaitAsync();
+            }
+        }
+
         public static async Task<TResult> AsAsync<TResult, TProgress>(IAsyncOperationWithProgress<TResult, TProgress> op)
         {
             TResult result = default;

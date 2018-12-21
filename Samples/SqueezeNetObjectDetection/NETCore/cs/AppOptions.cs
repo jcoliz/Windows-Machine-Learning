@@ -8,11 +8,11 @@ namespace SampleModule
     {
         public bool Help { get; private set; }
         public bool ShowList { get; private set; }
-/*
         public string DeviceId { get; private set; }
-        public bool ShowConfig { get; private set; }
-        public bool UseEdge { get; private set; }
-        */
+        /*
+                public bool ShowConfig { get; private set; }
+                public bool UseEdge { get; private set; }
+                */
         public string ModelPath { get; private set; }
         public string ImagePath { get; private set; }
         public bool Exit { get; private set; } = false;
@@ -21,11 +21,11 @@ namespace SampleModule
         {
             Add( "h|help", "show this message and exit", v => Help = v != null );
             Add( "l|list", "list available cameras and exit", v => ShowList = v != null);
-/*
-            Add( "d|device=", "the {ID} of device to connect", v => DeviceId = v);
-            Add( "e|edge", "transmit through azure edge", v => UseEdge = v != null);
-            Add( "c|config", "display device configuration", v => ShowConfig = v != null);
-            */
+            Add("d|device=", "the {ID} of device to connect", v => DeviceId = v);
+            /*
+                        Add( "e|edge", "transmit through azure edge", v => UseEdge = v != null);
+                        Add( "c|config", "display device configuration", v => ShowConfig = v != null);
+                        */
             Add( "m|model=", "path to model {FILE}", v => ModelPath = v);
             Add( "i|image=", "path to image {FILE}", v => ImagePath = v);
         }

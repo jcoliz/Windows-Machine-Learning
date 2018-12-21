@@ -12,6 +12,7 @@ using Windows.Foundation;
 using Windows.Media;
 using Newtonsoft.Json;
 using static Helpers.BlockTimerHelper;
+using static Helpers.AsyncHelper;
 
 namespace SampleModule
 {
@@ -35,11 +36,25 @@ namespace SampleModule
 
                 Options.Parse(args);
 
+                var devices = await Camera.EnumFrameSourcesAsync();
                 if (Options.ShowList)
-                    await Camera.EnumFrameSourcesAsync();
+                    Camera.ListFrameSources(devices);
+                    
 
                 if (Options.Exit)
                     return -1;
+
+                //
+                // Open camera
+                //
+
+                if (!string.IsNullOrEmpty(Options.DeviceId))
+                {
+                    (var group, var device) = Camera.Select(devices, "Microsoft Camera Front", "Color");
+
+                    var camera = new Camera();
+                    await camera.Open(group, device);
+                }
 
                 //
                 // Load model
