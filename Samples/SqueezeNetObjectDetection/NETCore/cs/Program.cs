@@ -62,7 +62,7 @@ namespace SampleModule
                 VideoFrame inputImage = null;
                 if (!string.IsNullOrEmpty(Options.DeviceId))
                 {
-                    (var group, var device) = Camera.Select(devices, "LifeCam", "Color");
+                    (var group, var device) = Camera.Select(devices, Options.DeviceId, "Color");
 
                     var camera = new Camera();
                     await camera.Open(group, device);
