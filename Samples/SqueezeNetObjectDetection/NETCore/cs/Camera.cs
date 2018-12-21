@@ -43,10 +43,10 @@ namespace SampleModule
 
         public static (MediaFrameSourceGroup, MediaFrameSourceInfo) Select(IReadOnlyList<MediaFrameSourceGroup> sources,string groupname,string devicekind)
         {
-            var group = sources.Where(x => x.DisplayName == groupname).FirstOrDefault();
+            var group = sources.Where(x => x.DisplayName.Contains(groupname)).FirstOrDefault();
 
             if (null == group)
-                throw new ApplicationException("$Unable to match source group {groupname}");
+                throw new ApplicationException($"Unable to match source group {groupname}");
 
             foreach (var x in group.SourceInfos)
                 Console.WriteLine(x.SourceKind);
@@ -99,14 +99,15 @@ namespace SampleModule
             Log.WriteLine("hunting for format");
             foreach (var f in formats)
             {
-                Log.Write(string.Format("major {0} sub {1} ", f.MajorType, f.Subtype));
+                //Log.Write(string.Format("major {0} sub {1} ", f.MajorType, f.Subtype));
                 if (f.MajorType == "Video")
                 {
-                    Log.Write(string.Format("w {0} h {1} ", f.VideoFormat.Width, f.VideoFormat.Height));
+                    //Log.Write(string.Format("w {0} h {1} ", f.VideoFormat.Width, f.VideoFormat.Height));
                     if (format == null)
                     {
                         format = f;
-                        Log.Write(" *** Updating Selection *** ");
+                        // Too chatty
+                        //Log.Write(" *** Updating Selection *** ");
                     }
                     else
                     {
@@ -115,11 +116,12 @@ namespace SampleModule
                         if (new_vf.Width > vf.Width || new_vf.Height > vf.Height)
                         {  // this will select first of the dupes which hopefully is ok
                             format = f;
-                            Log.Write(" *** Updating Selection *** ");
+                            // Too chatty
+                            //Log.Write(" *** Updating Selection *** ");
                         }
                     }
                 }
-                Log.WriteLine("");
+                //Log.WriteLine("");
             }
             if (format == null)
             {
@@ -134,6 +136,21 @@ namespace SampleModule
             reader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
             evtframe = new EventWaitHandle(false, EventResetMode.ManualReset);
             reader.FrameArrived += (s,a) => evtframe.Set();
+
+            await AsAsync(reader.StartAsync());
+        }
+
+        public async Task<MediaFrameReference> GetFrame()
+        {
+            var result = reader.TryAcquireLatestFrame();
+
+            while (null == result)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(10));
+                result = reader.TryAcquireLatestFrame();
+            }
+
+            return result;
         }
     }
 }

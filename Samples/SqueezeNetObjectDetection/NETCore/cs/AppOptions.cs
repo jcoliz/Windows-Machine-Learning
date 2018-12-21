@@ -34,7 +34,7 @@ namespace SampleModule
         {
             var result = base.Parse(args);
 
-            if (Help || ( !ShowList && ( string.IsNullOrEmpty(ModelPath) || string.IsNullOrEmpty(ImagePath)) ) )
+            if (Help || ( !ShowList && string.IsNullOrEmpty(ModelPath) ) )
             {
                 Console.WriteLine($"{AppName} {AppVersion}");
                 WriteOptionDescriptions(Console.Out);

@@ -45,18 +45,6 @@ namespace SampleModule
                     return -1;
 
                 //
-                // Open camera
-                //
-
-                if (!string.IsNullOrEmpty(Options.DeviceId))
-                {
-                    (var group, var device) = Camera.Select(devices, "Microsoft Camera Front", "Color");
-
-                    var camera = new Camera();
-                    await camera.Open(group, device);
-                }
-
-                //
                 // Load model
                 //
 
@@ -68,15 +56,35 @@ namespace SampleModule
                     });
 
                 //
+                // Open camera
+                //
+
+                VideoFrame inputImage = null;
+                if (!string.IsNullOrEmpty(Options.DeviceId))
+                {
+                    (var group, var device) = Camera.Select(devices, "LifeCam", "Color");
+
+                    var camera = new Camera();
+                    await camera.Open(group, device);
+
+                    var frame = await camera.GetFrame();
+                    inputImage = frame.VideoMediaFrame.GetVideoFrame();
+                }
+
+                //
                 // Load & process image
                 //
-            
-                StorageFile imageFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ImagePath));
-                IRandomAccessStream stream = AsyncHelper(imageFile.OpenReadAsync());
-                BitmapDecoder decoder = AsyncHelper(BitmapDecoder.CreateAsync(stream));
-                SoftwareBitmap softwareBitmap = AsyncHelper(decoder.GetSoftwareBitmapAsync());
-                softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-                VideoFrame inputImage = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap);
+
+                if (!string.IsNullOrEmpty(Options.ImagePath))
+                {
+                    StorageFile imageFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ImagePath));
+                    IRandomAccessStream stream = AsyncHelper(imageFile.OpenReadAsync());
+                    BitmapDecoder decoder = AsyncHelper(BitmapDecoder.CreateAsync(stream));
+                    SoftwareBitmap softwareBitmap = AsyncHelper(decoder.GetSoftwareBitmapAsync());
+                    softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+                    inputImage = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap);
+                }
+
                 ImageFeatureValue imageTensor = ImageFeatureValue.CreateFromVideoFrame(inputImage);
 
                 //
