@@ -13,6 +13,7 @@ using Windows.Media;
 using Newtonsoft.Json;
 using static Helpers.BlockTimerHelper;
 using static Helpers.AsyncHelper;
+using SqueezeNetObjectDetectionNC;
 
 namespace SampleModule
 {
@@ -48,11 +49,11 @@ namespace SampleModule
                 // Load model
                 //
 
-                ScoringModel __model = null;
+                DesktopObjectsModel __model = null;
                 await BlockTimer($"Loading modelfile '{Options.ModelPath}' on the '{_deviceName}' device",
                     async () => {
                         StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ModelPath));
-                        __model = await ScoringModel.CreateFromStreamAsync(modelFile);
+                        __model = await DesktopObjectsModel.CreateFromStreamAsync(modelFile);
                     });
 
                 //
@@ -109,10 +110,10 @@ namespace SampleModule
                     // Evaluate model
                     //
 
-                    ScoringOutput outcome = null;
+                    DesktopObjectsOutput outcome = null;
                     await BlockTimer("Running the model",
                         async () => {
-                            var input = new ScoringInput() { data_0 = imageTensor };
+                            var input = new DesktopObjectsInput() { data = imageTensor };
                             outcome = await __model.EvaluateAsync(input);
                         });
 
@@ -120,9 +121,26 @@ namespace SampleModule
                     // Print results
                     //
 
-                    var resultVector = outcome.softmaxout_1.GetAsVectorView();
-                    PrintResults(resultVector);
+                    // Custom Vision
+                    var resultVector = outcome.classLabel.GetAsVectorView();
+                    foreach(var line in resultVector)
+                    {
+                        Console.WriteLine(line);
+                    }
+                    if (null != outcome.loss)
+                    {
+                        int i = 1;
+                        foreach (var line in outcome.loss)
+                        {
+                            Console.WriteLine($"#{i++}");
+                            foreach (var item in line)
+                                Console.WriteLine($"\t{item.Key}: {item.Value}");
+                        }
+                    }
 
+                    // Squeezenet!
+                    //var resultVector = outcome.softmaxout_1.GetAsVectorView();
+                    //PrintResults(resultVector);
                 }
                 while (Options.RunForever);
 
