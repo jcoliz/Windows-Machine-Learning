@@ -20,12 +20,12 @@ namespace SampleModule
 
         public static void ListFrameSources(IReadOnlyList<MediaFrameSourceGroup> sources)
         {
-            Log.WriteLine("found {0} Source Groups", sources.Count);
+            Log.WriteLine("Found {0} Cameras", sources.Count);
             foreach (var g in sources)
             {
                 var sourceinfos = g.SourceInfos;
-                Log.WriteLine("Source Group {0}", g.Id);
-                Log.WriteLine("             {0}", g.DisplayName);
+                Log.WriteLine($"{g.DisplayName}");
+                /*
                 Log.WriteLine("             with {0} Sources:", sourceinfos.Count);
 
                 foreach (var s in sourceinfos)
@@ -38,6 +38,7 @@ namespace SampleModule
                     Log.WriteLine("\t\t       Kind {0}", d.Kind);
                 }
                 Log.WriteLine("\r\n");
+                */
             }
         }
 

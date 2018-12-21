@@ -49,11 +49,11 @@ namespace SampleModule
                 // Load model
                 //
 
-                DesktopObjectsModel __model = null;
+                ScoringModel __model = null;
                 await BlockTimer($"Loading modelfile '{Options.ModelPath}' on the '{_deviceName}' device",
                     async () => {
                         StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ModelPath));
-                        __model = await DesktopObjectsModel.CreateFromStreamAsync(modelFile);
+                        __model = await ScoringModel.CreateFromStreamAsync(modelFile);
                     });
 
                 //
@@ -110,10 +110,10 @@ namespace SampleModule
                     // Evaluate model
                     //
 
-                    DesktopObjectsOutput outcome = null;
+                    ScoringOutput outcome = null;
                     await BlockTimer("Running the model",
                         async () => {
-                            var input = new DesktopObjectsInput() { data = imageTensor };
+                            var input = new ScoringInput() { data_0 = imageTensor };
                             outcome = await __model.EvaluateAsync(input);
                         });
 
@@ -121,6 +121,7 @@ namespace SampleModule
                     // Print results
                     //
 
+#if customvision
                     // Custom Vision
                     var resultVector = outcome.classLabel.GetAsVectorView();
                     foreach(var line in resultVector)
@@ -137,10 +138,10 @@ namespace SampleModule
                                 Console.WriteLine($"\t{item.Key}: {item.Value}");
                         }
                     }
-
+#endif
                     // Squeezenet!
-                    //var resultVector = outcome.softmaxout_1.GetAsVectorView();
-                    //PrintResults(resultVector);
+                    var resultVector = outcome.softmaxout_1.GetAsVectorView();
+                    PrintResults(resultVector);
                 }
                 while (Options.RunForever);
 
