@@ -13,17 +13,14 @@ namespace Helpers
             T result = default;
             using (var AsyncMeSemaphore = new SemaphoreSlim(0, 1))
             {
-                op.Completed += (o, s) =>
+                if (op.Status != AsyncStatus.Completed)
                 {
-                    AsyncMeSemaphore.Release();
-                };
-                // in case the op completes before the handler got connected we must check
-                // status and complete things before waiting
-                if (op.Status == AsyncStatus.Completed)
-                {
-                    AsyncMeSemaphore.Release();
+                    op.Completed += (o, s) =>
+                    {
+                        AsyncMeSemaphore.Release();
+                    };
+                    await AsyncMeSemaphore.WaitAsync();
                 }
-                await AsyncMeSemaphore.WaitAsync();
                 result = op.GetResults();
             }
 
@@ -34,17 +31,14 @@ namespace Helpers
         {
             using (var AsyncMeSemaphore = new SemaphoreSlim(0, 1))
             {
-                op.Completed += (o, s) =>
+                if (op.Status != AsyncStatus.Completed)
                 {
-                    AsyncMeSemaphore.Release();
-                };
-                // in case the op completes before the handler got connected we must check
-                // status and complete things before waiting
-                if (op.Status == AsyncStatus.Completed)
-                {
-                    AsyncMeSemaphore.Release();
+                    op.Completed += (o, s) =>
+                    {
+                        AsyncMeSemaphore.Release();
+                    };
+                    await AsyncMeSemaphore.WaitAsync();
                 }
-                await AsyncMeSemaphore.WaitAsync();
             }
         }
 
@@ -53,12 +47,15 @@ namespace Helpers
             TResult result = default;
             using (var AsyncMeSemaphore = new SemaphoreSlim(0, 1))
             {
-                op.Completed += (o, s) =>
+                if (op.Status != AsyncStatus.Completed)
                 {
-                    result = o.GetResults();
-                    AsyncMeSemaphore.Release();
-                };
-                await AsyncMeSemaphore.WaitAsync();
+                    op.Completed += (o, s) =>
+                    {
+                        AsyncMeSemaphore.Release();
+                    };
+                    await AsyncMeSemaphore.WaitAsync();
+                }
+                result = op.GetResults();
             }
 
             return result;
