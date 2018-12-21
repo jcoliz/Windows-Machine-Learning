@@ -8,6 +8,7 @@ namespace SampleModule
     {
         public bool Help { get; private set; }
         public bool ShowList { get; private set; }
+        public bool RunForever { get; private set; }
         public string DeviceId { get; private set; }
         /*
                 public bool ShowConfig { get; private set; }
@@ -28,6 +29,7 @@ namespace SampleModule
                         */
             Add( "m|model=", "path to model {FILE}", v => ModelPath = v);
             Add( "i|image=", "path to image {FILE}", v => ImagePath = v);
+            Add("f|forever", "run forever", v => RunForever = v != null);
         }
 
         public new List<string> Parse(IEnumerable<string> args)
