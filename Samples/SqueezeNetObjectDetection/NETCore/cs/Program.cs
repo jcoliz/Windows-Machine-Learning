@@ -52,7 +52,9 @@ namespace SampleModule
                 ScoringModel __model = null;
                 await BlockTimer($"Loading modelfile '{Options.ModelPath}' on the '{_deviceName}' device",
                     async () => {
-                        StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ModelPath));
+                        var d = Directory.GetCurrentDirectory();
+                        var path = d + "\\" + Options.ModelPath;
+                        StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(path));
                         __model = await ScoringModel.CreateFromStreamAsync(modelFile);
                     });
 

@@ -62,10 +62,10 @@ IntelIRCameraSensorGroup
 From this list, we will choose the camera to use as input, as pass that into the next call with the --device parameter:
 
 ```
-PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> dotnet run -- --model="C:\Users\J\source\repos\Windows-Machine-Learning\SharedContent\models\SqueezeNet.onnx" -dLifeCam
+PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> dotnet run -- --model=SqueezeNet.onnx --device=LifeCam
 
 Using launch settings from C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\Properties\launchSettings.json...
-Loading modelfile 'C:\Users\J\source\repos\Windows-Machine-Learning\SharedContent\models\SqueezeNet.onnx' on the 'default' device...
+Loading modelfile 'SqueezeNet.onnx' on the 'default' device...
 ...OK 265 ticks
 Color
 Enumerating Frame Source Info
