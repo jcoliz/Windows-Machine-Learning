@@ -106,6 +106,66 @@ Be sure to log into the container respository from your device.
 PS C:\data\modules\SerialWin32> docker login {ACR_NAME}.azurecr.io {ACR_USER} {ACR_PASSWORD}
 ```
 
+## Copy bits to target device
+
+Currently, the container image must be built on an IoT Core device. At this point, we will copy the bits over to our device. 
+In this case, I have mapped the Q: drive on my development PC to the C: drive on my IoT Core device.
+
+```
+PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> robocopy bin\Debug\netcoreapp2.1\win-x64\publish\ q:\data\modules\squeezenet
+
+-------------------------------------------------------------------------------
+   ROBOCOPY     ::     Robust File Copy for Windows
+-------------------------------------------------------------------------------
+
+  Started : Friday, December 21, 2018 4:20:48 PM
+   Source : C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\bin\Debug\netcoreapp2.1\win-x64\publish\
+     Dest : q:\data\modules\squeezenet\
+
+    Files : *.*
+
+  Options : *.* /DCOPY:DA /COPY:DAT /R:1000000 /W:30
+
+------------------------------------------------------------------------------
+```
+
+Also, I'll need to copy over the Dockerfile, the model, and the tags:
+
+```
+PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> Copy-Item .\Dockerfile.windows-x64 , .\SqueezeNet.onnx , .\Labels.json -Destination q:\data\modules\squeezenet
+```
+
+## Containerize the sample app
+
+Build the container on the device. For the remainder of this sample, we will use the environment variable $Container
+to refer to the address of our container.
+
+```
+PS D:\Windows-iotcore-samples\Samples\EdgeModules\SerialWin32\CS> $Container = "{ACR_NAME}.azurecr.io/squeezenet:1.0.0-x64"
+
+PS D:\Windows-iotcore-samples\Samples\EdgeModules\SerialWin32\CS> docker build . -f .\Dockerfile.windows-x64 -t $Container
+
+Sending build context to Docker daemon  81.89MB
+Step 1/5 : FROM mcr.microsoft.com/windows/nanoserver/insider:10.0.17763.55
+ ---> 91da8a971b53
+Step 2/5 : ARG EXE_DIR=bin/Debug/netcoreapp2.1/win-x64/publish
+ ---> Running in b537bd4962d6
+Removing intermediate container b537bd4962d6
+ ---> 6d6281589c30
+Step 3/5 : WORKDIR /app
+ ---> Running in b8f3943ab2e5
+Removing intermediate container b8f3943ab2e5
+ ---> 37f5488097e5
+Step 4/5 : COPY $EXE_DIR/ ./
+ ---> 49f265682955
+Step 5/5 : CMD [ "SerialWin32.exe", "-rte", "-dPID_6001" ]
+ ---> Running in 1aedd449ffa4
+Removing intermediate container 1aedd449ffa4
+ ---> d6cbd51600e3
+Successfully built d6cbd51600e3
+    Successfully tagged {ACR_NAME}.azurecr.io/serialwin32:1.0.0-x64
+```
+
 ## License
 
 MIT. See [LICENSE file](https://github.com/Microsoft/Windows-Machine-Learning/blob/master/LICENSE).
