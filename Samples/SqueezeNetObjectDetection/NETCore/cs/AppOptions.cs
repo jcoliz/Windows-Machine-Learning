@@ -11,10 +11,7 @@ namespace SampleModule
         public bool Verbose { get; private set; }
         public bool RunForever { get; private set; }
         public string DeviceId { get; private set; }
-        /*
-                public bool ShowConfig { get; private set; }
-                public bool UseEdge { get; private set; }
-                */
+        public bool UseEdge { get; private set; }
         public string ModelPath { get; private set; }
         public bool Exit { get; private set; } = false;
 
@@ -24,10 +21,7 @@ namespace SampleModule
             Add( "l|list", "list available cameras and exit", v => ShowList = v != null);
             Add( "v|verbose", "print verbose logging information", v => Verbose = v != null);
             Add( "d|device=", "the {ID} of device to connect", v => DeviceId = v);
-            /*
-                        Add( "e|edge", "transmit through azure edge", v => UseEdge = v != null);
-                        Add( "c|config", "display device configuration", v => ShowConfig = v != null);
-                        */
+            Add( "e|edge", "transmit through azure edge", v => UseEdge = v != null);
             Add( "m|model=", "path to model {FILE}", v => ModelPath = v);
             Add( "f|forever", "run forever", v => RunForever = v != null);
         }

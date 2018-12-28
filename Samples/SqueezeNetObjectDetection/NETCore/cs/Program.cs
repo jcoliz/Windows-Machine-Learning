@@ -1,7 +1,11 @@
-﻿using System;
+﻿using Microsoft.Azure.Devices.Client;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Loader;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -10,7 +14,7 @@ using Windows.Storage.Streams;
 using Windows.AI.MachineLearning;
 using Windows.Foundation;
 using Windows.Media;
-using Newtonsoft.Json;
+
 using static Helpers.BlockTimerHelper;
 using static Helpers.AsyncHelper;
 using SqueezeNetObjectDetectionNC;
@@ -24,6 +28,8 @@ namespace SampleModule
         private static readonly string _deviceName = "default";
         private static readonly string _labelsFileName = "Labels.json";
         private static AppOptions Options;
+        private static ModuleClient ioTHubModuleClient;
+        private static CancellationTokenSource cts = null;
 
         static async Task<int> Main(string[] args)
         {
@@ -39,8 +45,7 @@ namespace SampleModule
 
                 var devices = await Camera.EnumFrameSourcesAsync();
                 if (Options.ShowList)
-                    Camera.ListFrameSources(devices);
-                    
+                    Camera.ListFrameSources(devices);                    
 
                 if (Options.Exit)
                     return -1;
@@ -57,6 +62,20 @@ namespace SampleModule
                         StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(path));
                         __model = await ScoringModel.CreateFromStreamAsync(modelFile);
                     });
+
+
+                //
+                // Init module client
+                //
+
+                if (Options.UseEdge)
+                {
+                    await InitEdge();
+                }
+
+                cts = new CancellationTokenSource();
+                AssemblyLoadContext.Default.Unloading += (ctx) => cts.Cancel();
+                Console.CancelKeyPress += (sender, cpe) => cts.Cancel();
 
                 //
                 // Open camera
@@ -110,10 +129,22 @@ namespace SampleModule
                             var resultVector = outcome.softmaxout_1.GetAsVectorView();
                             var message = ResultsToMessage(resultVector);
                             var dataBuffer = JsonConvert.SerializeObject(message);
+                            Console.WriteLine($"{DateTime.Now.ToLocalTime()} Sending: {dataBuffer}");
 
-                            Console.WriteLine(dataBuffer);
+                            //
+                            // Send results to Edge
+                            //
+
+                            if (Options.UseEdge)
+                            { 
+                                var eventMessage = new Message(Encoding.UTF8.GetBytes(dataBuffer));
+                                await ioTHubModuleClient.SendEventAsync("temperatureOutput", eventMessage); 
+
+                                // Let's not totally spam Edge :)
+                                await Task.Delay(500);
+                            }
                         }
-                        while (Options.RunForever);
+                        while (Options.RunForever && ! cts.Token.IsCancellationRequested);
                     }
                 }
 
@@ -172,5 +203,31 @@ namespace SampleModule
 
             return message;
         }
+
+        
+        /// <summary>
+        /// Initializes the ModuleClient and sets up the callback to receive
+        /// messages containing temperature information
+        /// </summary>
+        private static async Task InitEdge()
+        {
+            AmqpTransportSettings amqpSetting = new AmqpTransportSettings(TransportType.Amqp_Tcp_Only);
+            ITransportSettings[] settings = { amqpSetting };
+
+            // Open a connection to the Edge runtime
+            ioTHubModuleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
+            await ioTHubModuleClient.OpenAsync();
+            Console.WriteLine($"{DateTime.Now.ToLocalTime()} IoT Hub module client initialized.");
+        }
+
+        /// <summary>
+        /// Handles cleanup operations when app is cancelled or unloads
+        /// </summary>
+        public static Task WhenCancelled(CancellationToken cancellationToken)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).SetResult(true), tcs);
+            return tcs.Task;
+}
     }
 }
