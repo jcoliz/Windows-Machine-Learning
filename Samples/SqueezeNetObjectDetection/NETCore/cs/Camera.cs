@@ -140,7 +140,8 @@ namespace SampleModule
             {
                 throw new ApplicationException("Can't find a Video Format");
             }
-            Log.WriteLine(string.Format("selected videoformat -- major {0} sub {1} w {2} h {3}", format.MajorType, format.Subtype, format.VideoFormat.Width, format.VideoFormat.Height));
+            if (verbose)
+                Log.WriteLine(string.Format("selected videoformat -- major {0} sub {1} w {2} h {3}", format.MajorType, format.Subtype, format.VideoFormat.Width, format.VideoFormat.Height));
             await AsAsync(source.SetFormatAsync(format));
             if (verbose)
                 Log.WriteLine("set format complete");
