@@ -108,7 +108,10 @@ namespace SampleModule
                             //
 
                             var resultVector = outcome.softmaxout_1.GetAsVectorView();
-                            PrintResults(resultVector);
+                            var message = ResultsToMessage(resultVector);
+                            var dataBuffer = JsonConvert.SerializeObject(message);
+
+                            Console.WriteLine(dataBuffer);
                         }
                         while (Options.RunForever);
                     }
@@ -134,7 +137,7 @@ namespace SampleModule
             return operation.GetResults();
         }
 
-        private static void PrintResults(IReadOnlyList<float> resultVector)
+        private static MessageBody ResultsToMessage(IReadOnlyList<float> resultVector)
         {
             // Parse labels from label json file.  We know the file's entries are already sorted in order.
             var fileString = File.ReadAllText(_labelsFileName);
@@ -158,10 +161,16 @@ namespace SampleModule
                     }
                 }
             }
+
+            var message = new MessageBody();
+            message.results = new LabelResult[3];
+
             for (int i = 0; i < 3; i++)
             {
-                Console.WriteLine($"\"{ labels[topProbabilityLabelIndexes[i]]}\" with confidence of { topProbabilities[i]}");
+                message.results[i] = new LabelResult() { label = labels[topProbabilityLabelIndexes[i]], confidence = topProbabilities[i] };
             }
+
+            return message;
         }
     }
 }
