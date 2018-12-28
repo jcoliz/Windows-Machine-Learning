@@ -6,19 +6,25 @@ Images are supplied by a connected camera, inferenced against the SqueezeNet mod
 This code is derived from the 
 [NetCore SqueezeNetObjectDetection](https://github.com/Microsoft/Windows-Machine-Learning/tree/master/Samples/SqueezeNetObjectDetection/NETCore/cs) sample published in the [Windows ML Repo](https://github.com/Microsoft/Windows-Machine-Learning).
 
-## Install Azure IoT Edge
-
-These instructions work with the 1.0.5 release of [Azure IoT Edge for Windows](https://docs.microsoft.com/en-us/azure/iot-edge/).
-
-## Peripheral Hardware
-
-For this sample, a camera is required. I recommend a [LifeCam Cinema](https://www.microsoft.com/accessories/en-us/webcams).
 
 ## Prerequisites
 
-- [Windows 10 - Build 17763 or higher](https://www.microsoft.com/en-us/software-download/windowsinsiderpreviewiso) to build the solution
-- [Windows 10 IoT Core - Build 17763 or higher](https://docs.microsoft.com/en-us/windows/iot-core/windows-iot-core) to run the solution. Currently, this solution only runs on Windows 10 IoT Core hardware.
-- [Windows SDK - Build 17763 or higher](https://www.microsoft.com/en-us/software-download/windowsinsiderpreviewSDK)
+### Target Hardware
+
+* A [Minnowboard Turbot](https://minnowboard.org/minnowboard-turbot/) running [Windows 10 IoT Core - Build 17763](https://developer.microsoft.com/en-us/windows/iot). Currently, the sample runs only on Windows IoT Core harware, and only on x64 architecture. Future releases will include support for IoT Enterprise OS, and arm32 architecture.
+* A USB camera. I recommend a [LifeCam Cinema](https://www.microsoft.com/accessories/en-us/webcams).
+* [Azure IoT Edge for Windows - 1.0.5 or higher](https://docs.microsoft.com/en-us/azure/iot-edge/) 
+
+### Azure Subscription
+
+* [IoT Hub](https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-create-through-portal)
+* [Private container registry](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal)
+
+### Development Machine
+
+* [Visual Studio Code with Azure IoT Edge extension](https://docs.microsoft.com/en-us/azure/iot-edge/how-to-deploy-modules-vscode)
+* [Windows 10 - Build 17763 or higher](https://www.microsoft.com/en-us/software-download/windowsinsiderpreviewiso) to build the solution
+* [Windows SDK - Build 17763 or higher](https://www.microsoft.com/en-us/software-download/windowsinsiderpreviewSDK)
 
 ## Build the sample
 
@@ -32,14 +38,14 @@ The file path for the Windows.winmd file may be: ```C:\Program Files (x86)\Windo
 3. Build and publish the sample using dotnet command line:
 
 ```
-PS D:\Windows-iotcore-samples\Samples\EdgeModules\SqueezeNetObjectDetection\cs> dotnet publish -r win-x64
+PS C:\Windows-iotcore-samples\Samples\EdgeModules\SqueezeNetObjectDetection\cs> dotnet publish -r win-x64
 
 Microsoft (R) Build Engine version 15.8.169+g1ccb72aefa for .NET Core
 Copyright (C) Microsoft Corporation. All rights reserved.
 
-  Restore completed in 34.7 ms for C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\SqueezeNetObjectDetectionNC.csproj.
-  SqueezeNetObjectDetectionNC -> C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\bin\Debug\netcoreapp2.1\win-x64\SqueezeNetObjectDetectionNC.dll
-  SqueezeNetObjectDetectionNC -> C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\bin\Debug\netcoreapp2.1\win-x64\publish\
+  Restore completed in 34.7 ms for C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\SqueezeNetObjectDetectionNC.csproj.
+  SqueezeNetObjectDetectionNC -> C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\bin\Debug\netcoreapp2.1\win-x64\SqueezeNetObjectDetectionNC.dll
+  SqueezeNetObjectDetectionNC -> C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\bin\Debug\netcoreapp2.1\win-x64\publish\
 ```
 
 ## Run the sample on your development machine
@@ -49,7 +55,7 @@ As a first initial step, you can run the sample natively on your development mac
 First, run the app with the "--list" parameter to show the cameras on your PC:
 
 ```
-PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> dotnet run -- --list
+PS C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> dotnet run -- --list
 
 Found 5 Cameras
 Microsoft Camera Rear
@@ -59,39 +65,22 @@ Microsoftr LifeCam Studio(TM)
 IntelIRCameraSensorGroup
 ```
 
-From this list, we will choose the camera to use as input, as pass that into the next call with the --device parameter:
+From this list, we will choose the camera to use as input, as pass that into the next call with the --device parameter, along with the model using the --model parameter.
 
 ```
-PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> dotnet run -- --model=SqueezeNet.onnx --device=LifeCam
+PS C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> dotnet run -- --model=SqueezeNet.onnx --device=LifeCam
 
-Using launch settings from C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\Properties\launchSettings.json...
 Loading modelfile 'SqueezeNet.onnx' on the 'default' device...
-...OK 265 ticks
-Color
-Enumerating Frame Source Info
-Selecting Source
-Enumerating Frame Sources
-capture initialized
-have frame sources
-have frame source that matches chosen source info id
-have formats
-hunting for format
-selected videoformat -- major Video sub YUY2 w 1920 h 1080
-set format complete
-frame reader retrieved
-
+...OK 2484 ticks
 Retrieving image from camera...
-...OK 484 ticks
+...OK 828 ticks
 Running the model...
-...OK 63 ticks
-
-"saltshaker, salt shaker" with confidence of 0.5000542
-"soap dispenser" with confidence of 0.08704852
-"toaster" with confidence of 0.02377551
+...OK 938 ticks
+12/28/2018 12:13:05 PM Sending: {"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
 ```
 
-Here we can see that the sample is successfully running on the development machine, found the camera, and recognized that the camera was possibly
-looking at a salt shaker.
+Here we can see that the sample is successfully running on the development machine, found the camera, and recognized that the camera was probably
+looking at a coffee mug. (It was.)
 
 ## Create a personal container repository
 
@@ -103,7 +92,7 @@ When following the sample, replace any "{ACR_*}" values with the correct values 
 Be sure to log into the container respository from your device.
 
 ```
-PS C:\data\modules\SerialWin32> docker login {ACR_NAME}.azurecr.io {ACR_USER} {ACR_PASSWORD}
+PS C:\data\modules\squeezenet> docker login {ACR_NAME}.azurecr.io {ACR_USER} {ACR_PASSWORD}
 ```
 
 ## Copy bits to target device
@@ -112,14 +101,14 @@ Currently, the container image must be built on an IoT Core device. At this poin
 In this case, I have mapped the Q: drive on my development PC to the C: drive on my IoT Core device.
 
 ```
-PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> robocopy bin\Debug\netcoreapp2.1\win-x64\publish\ q:\data\modules\squeezenet
+PS C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> robocopy bin\Debug\netcoreapp2.1\win-x64\publish\ q:\data\modules\squeezenet
 
 -------------------------------------------------------------------------------
    ROBOCOPY     ::     Robust File Copy for Windows
 -------------------------------------------------------------------------------
 
   Started : Friday, December 21, 2018 4:20:48 PM
-   Source : C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\bin\Debug\netcoreapp2.1\win-x64\publish\
+   Source : C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs\bin\Debug\netcoreapp2.1\win-x64\publish\
      Dest : q:\data\modules\squeezenet\
 
     Files : *.*
@@ -129,10 +118,23 @@ PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDete
 ------------------------------------------------------------------------------
 ```
 
-Also, I'll need to copy over the Dockerfile, the model, and the tags:
+## Run the sample on the target device
+
+Following the same approach as above, run the app on the target device to ensure you have the correct camera there, and it's working on that device.
 
 ```
-PS C:\Users\J\source\repos\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> Copy-Item .\Dockerfile.windows-x64 , .\SqueezeNet.onnx , .\Labels.json -Destination q:\data\modules\squeezenet
+[192.168.1.120]: PS C:\data\modules\squeezenet> .\SqueezeNetObjectDetectionNC.exe --list
+Found 1 Cameras
+Microsoft® LifeCam Studio(TM)
+
+[192.168.1.120]: PS C:\data\modules\squeezenet> .\SqueezeNetObjectDetectionNC.exe --model=SqueezeNet.onnx --device=LifeCam
+Loading modelfile 'SqueezeNet.onnx' on the 'default' device...
+...OK 1079 ticks
+Retrieving image from camera...
+...OK 766 ticks
+Running the model...
+...OK 625 ticks
+12/28/2018 12:13:05 PM Sending: {"results":[{"label":"coffee mug","confidence":0.99733692407608032},{"label":"cup","confidence":0.0024446924217045307},{"label":"water jug","confidence":8.2805654528783634E-06}]}
 ```
 
 ## Containerize the sample app
@@ -141,31 +143,168 @@ Build the container on the device. For the remainder of this sample, we will use
 to refer to the address of our container.
 
 ```
-PS D:\Windows-iotcore-samples\Samples\EdgeModules\SerialWin32\CS> $Container = "{ACR_NAME}.azurecr.io/squeezenet:1.0.0-x64"
+[192.168.1.120]: PS C:\Data\modules\squeezenet> $Container = "{ACR_NAME}.azurecr.io/squeezenet:1.0.0-x64"
 
-PS D:\Windows-iotcore-samples\Samples\EdgeModules\SerialWin32\CS> docker build . -f .\Dockerfile.windows-x64 -t $Container
+[192.168.1.120]: PS C:\Data\modules\squeezenet> docker build . -t $Container
+Sending build context to Docker daemon  81.63MB
 
-Sending build context to Docker daemon  81.89MB
-Step 1/5 : FROM mcr.microsoft.com/windows/nanoserver/insider:10.0.17763.55
- ---> 91da8a971b53
-Step 2/5 : ARG EXE_DIR=bin/Debug/netcoreapp2.1/win-x64/publish
- ---> Running in b537bd4962d6
-Removing intermediate container b537bd4962d6
- ---> 6d6281589c30
+Step 1/5 : FROM mcr.microsoft.com/windows/iotcore:1809
+ ---> 2d0e5d769eb2
+Step 2/5 : ARG EXE_DIR=.
+ ---> Using cache
+ ---> e56aef21bf6c
 Step 3/5 : WORKDIR /app
- ---> Running in b8f3943ab2e5
-Removing intermediate container b8f3943ab2e5
- ---> 37f5488097e5
+ ---> Using cache
+ ---> 5b66e01e041a
 Step 4/5 : COPY $EXE_DIR/ ./
- ---> 49f265682955
-Step 5/5 : CMD [ "SerialWin32.exe", "-rte", "-dPID_6001" ]
- ---> Running in 1aedd449ffa4
-Removing intermediate container 1aedd449ffa4
- ---> d6cbd51600e3
-Successfully built d6cbd51600e3
-    Successfully tagged {ACR_NAME}.azurecr.io/serialwin32:1.0.0-x64
+ ---> 3798927f4eaa
+Step 5/5 : CMD [ "SqueezeNetObjectDetectionNC.exe", "-mSqueezeNet.onnx", "-dLifeCam", "-ef" ]
+ ---> Running in c4f09d9edc5b
+Removing intermediate container c4f09d9edc5b
+ ---> e7ab7ea5bd16
+Successfully built e7ab7ea5bd16
+Successfully tagged {ACR_NAME}.azurecr.io/squeezenet:1.0.0-x64
 ```
 
-## License
+## Run the app in the container
 
-MIT. See [LICENSE file](https://github.com/Microsoft/Windows-Machine-Learning/blob/master/LICENSE).
+One more test to ensure that the app is able to see the camera through the container.
+
+```
+[192.168.1.120]: PS C:\Data\modules\squeezenet> docker run --isolation process --device "class/E5323777-F976-4f5b-9B55-B94699C46E44" $Container SqueezeNetObjectDetectionNC.exe --list
+Found 1 Cameras
+Microsoft® LifeCam Studio(TM)
+
+[192.168.1.120]: PS C:\Data\modules\squeezenet> docker run --isolation process --device "class/5B45201D-F2F2-4F3B-85BB-30FF1F953599"  --device "class/E5323777-F976-4f5b-9B55-B94699C46E44" $Container SqueezeNetObjectDetectionNC.exe --device=LifeCam --model=SqueezeNet.onnx
+Loading modelfile 'SqueezeNet.onnx' on the 'default' device...
+...OK 2484 ticks
+Retrieving image from camera...
+...OK 828 ticks
+Running the model...
+...OK 938 ticks
+12/28/2018 12:13:05 PM Sending: {"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
+```
+
+## Push the container
+
+Now that we are sure the app is working correctly within the container, we will push it to our repository.
+
+```
+[192.168.1.120]: PS C:\Data\modules\squeezenet> docker push $Container
+The push refers to repository [{ACR_NAME}.azurecr.io/squeezenet]
+60afb1c1d301: Preparing
+02e3d8daa5bb: Preparing
+1f97445a0771: Preparing
+994bd29f895d: Preparing
+1d7265923a7e: Preparing
+1d7265923a7e: Skipped foreign layer
+994bd29f895d: Layer already exists
+1f97445a0771: Layer already exists
+60afb1c1d301: Pushed
+02e3d8daa5bb: Pushed
+1.0.1-x64: digest: sha256:d39e6cdc78c1ebe34b50603c0ff74d6dea7f95015da229f8066a1c141ab22118 size: 1465
+```
+
+## Edit the deployment.json file
+
+In the repo, you will find separate deployment.{arch}.json files for each architecture.
+Choose the deployment file corresponding to your deployment atchitecture, then fill in the details for your container image.
+Search for "{ACR_*}" and replace those values with the correct values for your container repository.
+The ACR_IMAGE must exactly match what you pushed, e.g. jcoliz.azurecr.io/squeezenet:1.0.0-x64
+
+```
+    "$edgeAgent": {
+      "properties.desired": {
+        "runtime": {
+          "settings": {
+            "registryCredentials": {
+              "{ACR_NAME}": {
+                "username": "{ACR_USER}",
+                "password": "{ACR_PASSWORD}",
+                "address": "{ACR_NAME}.azurecr.io"
+              }
+            }
+          }
+        }
+...
+        "modules": {
+            "squeezenet": {
+            "settings": {
+              "image": "{ACR_IMAGE}",
+                "createOptions": "{\"HostConfig\":{\"Devices\":[{\"CgroupPermissions\":\"\",\"PathInContainer\":\"\",\"PathOnHost\":\"class/E5323777-F976-4f5b-9B55-B94699C46E44\"},{\"CgroupPermissions\":\"\",\"PathInContainer\":\"\",\"PathOnHost\":\"class/5B45201D-F2F2-4F3B-85BB-30FF1F953599\"}]}}"
+            }
+          }
+```
+
+## Deploy
+
+Back on your development machine, you can now deploy this deployment.json file to your device.
+For reference, please see [Deploy Azure IoT Edge modules from Visual Studio Code](https://docs.microsoft.com/en-us/azure/iot-edge/how-to-deploy-modules-vscode)
+
+## Verify
+
+Using the Azure IoT Edge extension for Visual Studio Code, you can select your device and choose "Start Monitoring D2C Message". You should see this:
+
+```
+[IoTHubMonitor] [4:04:43 PM] Message received from [jcoliz-preview/squeezenet]:
+{"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
+[IoTHubMonitor] [4:04:44 PM] Message received from [jcoliz-preview/squeezenet]:
+{"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
+```
+
+From a command prompt on the device, you can also check the logs for the module itself.
+
+First, find the module container:
+
+```
+[192.168.1.120]: PS C:\Data> docker ps
+
+CONTAINER ID        IMAGE                                                                           COMMAND                  CREATED              STATUS              PORTS                                                                  NAMES
+b4107d30a29d        {ACR_NAME}.azurecr.io/squeezenet:1.0.2-x64                                       "SqueezeNetObjectDetectionNC.exe -rt…"   About a minute ago   Up About a minute                                                                          squeezenet
+56170371f8f5        edgeshared.azurecr.io/microsoft/azureiotedge-hub:1809_insider-windows-x64     "dotnet Microsoft.Az…"   3 days ago           Up 6 minutes        0.0.0.0:443->443/tcp, 0.0.0.0:5671->5671/tcp, 0.0.0.0:8883->8883/tcp   edgeHub
+27c147e5c760        edgeshared.azurecr.io/microsoft/azureiotedge-agent:1809_insider-windows-x64   "dotnet Microsoft.Az…"   3 days ago           Up 7 minutes                                                                               edgeAgent
+```
+
+Then, use the ID for the squeezenet container to check the logs
+
+```
+[192.168.1.120]: PS C:\Data> docker logs b4107d30a29d
+Loading modelfile 'SqueezeNet.onnx' on the 'default' device...
+...OK 2484 ticks
+Retrieving image from camera...
+...OK 828 ticks
+Running the model...
+...OK 938 ticks
+12/28/2018 12:13:05 PM Sending: {"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
+Retrieving image from camera...
+...OK 828 ticks
+Running the model...
+...OK 938 ticks
+12/28/2018 12:13:05 PM Sending: {"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
+Retrieving image from camera...
+...OK 828 ticks
+Running the model...
+...OK 938 ticks
+12/28/2018 12:13:05 PM Sending: {"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
+```
+
+## Advanced topics: Bring your own model!
+
+In this sample, we've shown how to do object detection using the standard SqueezeNet model. You can do the same thing with any AI model which can be converted to ONNX.
+
+Read more to learn how!
+* [ONNX and Azure Machine Learning: Create and deploy interoperable AI models](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-build-deploy-onnx)
+* [Convert ML models to ONNX with WinMLTools](https://docs.microsoft.com/en-us/windows/ai/convert-model-winmltools)
+* [Tutorial: Use an ONNX model from Custom Vision with Windows ML (preview)](https://docs.microsoft.com/en-us/azure/cognitive-services/custom-vision-service/custom-vision-onnx-windows-ml)
+
+Once you have an ONNX model, you'll need to make some changes to the sample.
+
+First, generate a Scoring file, using the [MLGen](https://docs.microsoft.com/en-us/windows/ai/mlgen) tool. This creates an interface with wrapper classes that call the Windows ML API for you, allowing you to easily load, bind, and evaluate a model in your project.
+
+```
+PS C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> $mlgen="C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x64\mlgen.exe"
+PS C:\Windows-Machine-Learning\Samples\SqueezeNetObjectDetection\NETCore\cs> 
+& $mlgen -i C:\\Windows-Machine-Learning\SharedContent\models\SqueezeNet.onnx -l cs -n SqueezeNetObjectDetectionNC -p Scoring -o Scoring.cs
+```
+
+Second, depending on the outputs of your model, make the necessary changes to the ResultsToMessage method in Program.cs. Here, you translate the output of your model into a JSON object suitable for transmission to Edge.
