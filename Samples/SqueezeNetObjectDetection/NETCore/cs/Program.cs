@@ -69,7 +69,7 @@ namespace SampleModule
 
                     using (camera = new Camera())
                     {
-                        await camera.Open(group, device);
+                        await camera.Open(group, device, Options.Verbose);
 
                         //
                         // Main loop

@@ -49,9 +49,6 @@ namespace SampleModule
             if (null == group)
                 throw new ApplicationException($"Unable to match source group {groupname}");
 
-            foreach (var x in group.SourceInfos)
-                Console.WriteLine(x.SourceKind);
-
             var device = group.SourceInfos.Where(x => x.SourceKind.ToString() == devicekind).FirstOrDefault();
 
             if (null == device)
@@ -64,12 +61,15 @@ namespace SampleModule
         private MediaFrameReader reader; // IDisposable
         private EventWaitHandle evtframe;
 
-        public async Task Open(MediaFrameSourceGroup frame_group, MediaFrameSourceInfo frame_source_info)
+        public async Task Open(MediaFrameSourceGroup frame_group, MediaFrameSourceInfo frame_source_info, bool verbose = false)
         {
             capture = new MediaCapture(); // IDisposable
             MediaCaptureInitializationSettings init = new MediaCaptureInitializationSettings();
-            Log.WriteLine("Enumerating Frame Source Info");
-            Log.WriteLine("Selecting Source");
+            if (verbose)
+            {
+                Log.WriteLine("Enumerating Frame Source Info");
+                Log.WriteLine("Selecting Source");
+            }
 
             init.SourceGroup = frame_group;
             init.SharingMode = MediaCaptureSharingMode.ExclusiveControl;
@@ -77,28 +77,39 @@ namespace SampleModule
             //init.MemoryPreference(a.opt.fgpu_only ? MediaCaptureMemoryPreference::Auto : MediaCaptureMemoryPreference::Cpu);
             init.MemoryPreference = MediaCaptureMemoryPreference.Cpu;
             init.StreamingCaptureMode = StreamingCaptureMode.Video;
-            Log.WriteLine("Enumerating Frame Sources");
+
+            if (verbose)
+                Log.WriteLine("Enumerating Frame Sources");
             await AsAsync(capture.InitializeAsync(init));
-            Log.WriteLine("capture initialized");
+
+            if (verbose)
+                Log.WriteLine("capture initialized");
+
             var sources = capture.FrameSources;
-            Log.WriteLine("have frame sources");
+
+            if (verbose)
+                Log.WriteLine("have frame sources");
+
             MediaFrameSource source;
             var found = sources.TryGetValue(frame_source_info.Id, out source);
             if (!found)
             {
                 throw new ApplicationException(string.Format("can't find source {0}", source));
             }
-            Log.WriteLine("have frame source that matches chosen source info id");
+            if (verbose)
+                Log.WriteLine("have frame source that matches chosen source info id");
             // TODO: investigate MediaCaptureVideoProfile, MediaCaptureVideoProfileDescription as a possibly simpler way to do this.
             // NO: MediaCaptureVideoProfile don't have frame reader variant only photo, preview, and redircord.
 
             // this returns tons of apparent duplicates that can be distinguised using any properties available on the winrt interfaces.
             // i suspect this is because not all the properties on the actual underlying MFVIDEOFORMAT are exposed on the winrt VideoFrameFormat
             var formats = source.SupportedFormats;
-            Log.WriteLine("have formats");
+            if (verbose)
+                Log.WriteLine("have formats");
             MediaFrameFormat format = null;
 
-            Log.WriteLine("hunting for format");
+            if (verbose)
+                Log.WriteLine("hunting for format");
             foreach (var f in formats)
             {
                 //Log.Write(string.Format("major {0} sub {1} ", f.MajorType, f.Subtype));
@@ -131,10 +142,12 @@ namespace SampleModule
             }
             Log.WriteLine(string.Format("selected videoformat -- major {0} sub {1} w {2} h {3}", format.MajorType, format.Subtype, format.VideoFormat.Width, format.VideoFormat.Height));
             await AsAsync(source.SetFormatAsync(format));
-            Log.WriteLine("set format complete");
+            if (verbose)
+                Log.WriteLine("set format complete");
 
             reader = await AsAsync(capture.CreateFrameReaderAsync(source));
-            Log.WriteLine("frame reader retrieved\r\n");
+            if (verbose)
+                Log.WriteLine("frame reader retrieved\r\n");
             reader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
             evtframe = new EventWaitHandle(false, EventResetMode.ManualReset);
             reader.FrameArrived += (s,a) => evtframe.Set();
