@@ -138,7 +138,7 @@ namespace SampleModule
                             if (Options.UseEdge)
                             { 
                                 var eventMessage = new Message(Encoding.UTF8.GetBytes(dataBuffer));
-                                await ioTHubModuleClient.SendEventAsync("temperatureOutput", eventMessage); 
+                                await ioTHubModuleClient.SendEventAsync("resultsOutput", eventMessage); 
 
                                 // Let's not totally spam Edge :)
                                 await Task.Delay(500);
