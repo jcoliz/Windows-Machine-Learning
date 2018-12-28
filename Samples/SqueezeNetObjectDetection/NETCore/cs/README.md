@@ -82,19 +82,6 @@ Running the model...
 Here we can see that the sample is successfully running on the development machine, found the camera, and recognized that the camera was probably
 looking at a coffee mug. (It was.)
 
-## Create a personal container repository
-
-In order to deploy modules to your device, you will need access to a container respository. 
-Refer to [Quickstart: Create a private container registry using the Azure portal](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal).
-
-When following the sample, replace any "{ACR_*}" values with the correct values for your container repository.
-
-Be sure to log into the container respository from your device.
-
-```
-PS C:\data\modules\squeezenet> docker login {ACR_NAME}.azurecr.io {ACR_USER} {ACR_PASSWORD}
-```
-
 ## Copy bits to target device
 
 Currently, the container image must be built on an IoT Core device. At this point, we will copy the bits over to our device. 
@@ -135,6 +122,19 @@ Retrieving image from camera...
 Running the model...
 ...OK 625 ticks
 12/28/2018 12:13:05 PM Sending: {"results":[{"label":"coffee mug","confidence":0.99733692407608032},{"label":"cup","confidence":0.0024446924217045307},{"label":"water jug","confidence":8.2805654528783634E-06}]}
+```
+
+## Create a personal container repository
+
+In order to deploy modules to your device, you will need access to a container respository. 
+Refer to [Quickstart: Create a private container registry using the Azure portal](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal).
+
+When following the sample, replace any "{ACR_*}" values with the correct values for your container repository.
+
+Be sure to log into the container respository from the device where you will be building the containers.
+
+```
+[192.168.1.120]: PS C:\Data\modules\squeezenet> docker login {ACR_NAME}.azurecr.io {ACR_USER} {ACR_PASSWORD}
 ```
 
 ## Containerize the sample app
