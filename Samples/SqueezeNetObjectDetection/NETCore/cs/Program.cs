@@ -59,21 +59,6 @@ namespace SampleModule
                     });
 
                 //
-                // Load & process image
-                //
-
-                VideoFrame inputImage = null;
-                if (!string.IsNullOrEmpty(Options.ImagePath))
-                {
-                    StorageFile imageFile = AsyncHelper(StorageFile.GetFileFromPathAsync(Options.ImagePath));
-                    IRandomAccessStream stream = AsyncHelper(imageFile.OpenReadAsync());
-                    BitmapDecoder decoder = AsyncHelper(BitmapDecoder.CreateAsync(stream));
-                    SoftwareBitmap softwareBitmap = AsyncHelper(decoder.GetSoftwareBitmapAsync());
-                    softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-                    inputImage = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap);
-                }
-
-                //
                 // Open camera
                 //
 
@@ -82,70 +67,52 @@ namespace SampleModule
                 {
                     (var group, var device) = Camera.Select(devices, Options.DeviceId, "Color");
 
-                    camera = new Camera();
-                    await camera.Open(group, device);
-                }
-
-                //
-                // Main loop
-                //
-
-                do
-                {
-                    //
-                    // Pull image from camera
-                    //
-
-                    if (null != camera)
+                    using (camera = new Camera())
                     {
-                        await BlockTimer($"Retrieving image from camera",
-                            async () => {
-                                var frame = await camera.GetFrame();
-                                inputImage = frame.VideoMediaFrame.GetVideoFrame();
-                            });
+                        await camera.Open(group, device);
 
-                    }
+                        //
+                        // Main loop
+                        //
 
-                    ImageFeatureValue imageTensor = ImageFeatureValue.CreateFromVideoFrame(inputImage);
-
-                    //
-                    // Evaluate model
-                    //
-
-                    ScoringOutput outcome = null;
-                    await BlockTimer("Running the model",
-                        async () => {
-                            var input = new ScoringInput() { data_0 = imageTensor };
-                            outcome = await __model.EvaluateAsync(input);
-                        });
-
-                    //
-                    // Print results
-                    //
-
-#if customvision
-                    // Custom Vision
-                    var resultVector = outcome.classLabel.GetAsVectorView();
-                    foreach(var line in resultVector)
-                    {
-                        Console.WriteLine(line);
-                    }
-                    if (null != outcome.loss)
-                    {
-                        int i = 1;
-                        foreach (var line in outcome.loss)
+                        do
                         {
-                            Console.WriteLine($"#{i++}");
-                            foreach (var item in line)
-                                Console.WriteLine($"\t{item.Key}: {item.Value}");
+                            //
+                            // Pull image from camera
+                            //
+
+                            VideoFrame inputImage = null;
+                            await BlockTimer($"Retrieving image from camera",
+                                async () =>
+                                {
+                                    var frame = await camera.GetFrame();
+                                    inputImage = frame.VideoMediaFrame.GetVideoFrame();
+                                });
+
+                            ImageFeatureValue imageTensor = ImageFeatureValue.CreateFromVideoFrame(inputImage);
+
+                            //
+                            // Evaluate model
+                            //
+
+                            ScoringOutput outcome = null;
+                            await BlockTimer("Running the model",
+                                async () =>
+                                {
+                                    var input = new ScoringInput() { data_0 = imageTensor };
+                                    outcome = await __model.EvaluateAsync(input);
+                                });
+
+                            //
+                            // Print results
+                            //
+
+                            var resultVector = outcome.softmaxout_1.GetAsVectorView();
+                            PrintResults(resultVector);
                         }
+                        while (Options.RunForever);
                     }
-#endif
-                    // Squeezenet!
-                    var resultVector = outcome.softmaxout_1.GetAsVectorView();
-                    PrintResults(resultVector);
                 }
-                while (Options.RunForever);
 
                 return 0;
             }

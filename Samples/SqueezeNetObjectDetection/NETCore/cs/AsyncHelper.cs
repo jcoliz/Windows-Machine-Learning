@@ -18,8 +18,13 @@ namespace Helpers
                     op.Completed += (o, s) =>
                     {
                         AsyncMeSemaphore.Release();
+                        System.Console.WriteLine("Operation now complete");
                     };
                     await AsyncMeSemaphore.WaitAsync();
+                }
+                else
+                {
+                        System.Console.WriteLine("Operation was complete");
                 }
                 result = op.GetResults();
             }
@@ -36,9 +41,12 @@ namespace Helpers
                     op.Completed += (o, s) =>
                     {
                         AsyncMeSemaphore.Release();
+                        System.Console.WriteLine("Action now complete");
                     };
                     await AsyncMeSemaphore.WaitAsync();
                 }
+                else
+                    System.Console.WriteLine("Action was complete");
             }
         }
 

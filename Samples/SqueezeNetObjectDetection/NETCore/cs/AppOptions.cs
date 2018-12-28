@@ -15,7 +15,6 @@ namespace SampleModule
                 public bool UseEdge { get; private set; }
                 */
         public string ModelPath { get; private set; }
-        public string ImagePath { get; private set; }
         public bool Exit { get; private set; } = false;
 
         public AppOptions()
@@ -28,7 +27,6 @@ namespace SampleModule
                         Add( "c|config", "display device configuration", v => ShowConfig = v != null);
                         */
             Add( "m|model=", "path to model {FILE}", v => ModelPath = v);
-            Add( "i|image=", "path to image {FILE}", v => ImagePath = v);
             Add("f|forever", "run forever", v => RunForever = v != null);
         }
 
