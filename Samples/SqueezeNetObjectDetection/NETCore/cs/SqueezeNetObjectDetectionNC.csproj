@@ -39,5 +39,10 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <Target Name="CopyCustomContentOnPublish" AfterTargets="Publish">
+    <Copy SourceFiles="Labels.json" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="SqueezeNet.onnx" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="Dockerfile.$(RuntimeIdentifier)" DestinationFiles="$(PublishDir)\Dockerfile" />
+  </Target>
 
 </Project>
