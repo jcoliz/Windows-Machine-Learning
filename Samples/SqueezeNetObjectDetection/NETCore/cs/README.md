@@ -3,9 +3,8 @@
 This is a sample module showing how to run Windows ML inferencing in an Azure IoT Edge module running on Windows. 
 Images are supplied by a connected camera, inferenced against the SqueezeNet model, and sent to IoT Hub.
 
-This code is derived from the 
+This sample is derived from the 
 [NetCore SqueezeNetObjectDetection](https://github.com/Microsoft/Windows-Machine-Learning/tree/master/Samples/SqueezeNetObjectDetection/NETCore/cs) sample published in the [Windows ML Repo](https://github.com/Microsoft/Windows-Machine-Learning).
-
 
 ## Prerequisites
 
@@ -287,6 +286,19 @@ Running the model...
 ...OK 938 ticks
 12/28/2018 12:13:05 PM Sending: {"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
 ```
+
+## Next step: Visualize your data
+
+Now that your object recognition data is flowing into the Azure cloud, you can use Time Series Insights to visualize it. 
+
+1. [Add an IoT hub event source to your Time Series Insights environment](https://docs.microsoft.com/en-us/azure/time-series-insights/time-series-insights-how-to-add-an-event-source-iothub).
+2. Access your environment in the [Azure Time Series Insights explorer](https://docs.microsoft.com/en-us/azure/time-series-insights/time-series-insights-explorer).
+3. Create a query to measure results.confidence, split by results.label.
+4. Use the heatmap view for best results.
+
+As you experiment with different objects, you can visualize them over time by adjusting the timeframe and interval size. Be sure to refresh the data after changing objects!
+
+![Time Series Insights Explorer](assets/time-series-insights.jpg)
 
 ## Advanced topics: Bring your own model!
 
