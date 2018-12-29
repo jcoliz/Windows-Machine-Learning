@@ -25,6 +25,13 @@ It is derived from the
 * [Windows 10 - Build 17763 or higher](https://www.microsoft.com/en-us/software-download/windowsinsiderpreviewiso) to build the solution
 * [Windows SDK - Build 17763 or higher](https://www.microsoft.com/en-us/software-download/windowsinsiderpreviewSDK)
 
+### Insider Knowledge
+
+Unfortunately, this sample cannot be reproduced by the public, until the following PR's are upstreamed and released:
+
+* [IoT Edge PR 670](https://github.com/Azure/iotedge/pull/670). Without this change, IoT Edge fills up the very small MainOS partition on IoT Core devices. To work around, I have installed docker manually, and reconfigured Edge to use this manually-installed docker.
+* [Moby Cli PR 1290](https://github.com/docker/cli/pull/1290). Without this change, docker.exe will not take the --device parameter. Thus, every case below where the cli is called with --device, will fail. To work around, we all use an internally-built moby cli.
+
 ## Build the sample
 
 To get access to Windows.AI.MachineLearning and various other Windows classes an assembly reference needs to be added for Windows.winmd
@@ -81,9 +88,9 @@ Running the model...
 Here we can see that the sample is successfully running on the development machine, found the camera, and recognized that the camera was probably
 looking at a coffee mug. (It was.)
 
-## Copy bits to target device
+## Copy published files to target device
 
-Currently, the container image must be built on an IoT Core device. At this point, we will copy the bits over to our device. 
+Currently, the container image must be built on an IoT Core device. To enable this, we will copy the 'publish' folder over to our device. 
 In this case, I have mapped the Q: drive on my development PC to the C: drive on my IoT Core device.
 
 ```
