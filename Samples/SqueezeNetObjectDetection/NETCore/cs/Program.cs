@@ -30,6 +30,7 @@ namespace SampleModule
         private static AppOptions Options;
         private static ModuleClient ioTHubModuleClient;
         private static CancellationTokenSource cts = null;
+        private static List<string> labels;
 
         static async Task<int> Main(string[] args)
         {
@@ -50,19 +51,29 @@ namespace SampleModule
                 if (Options.Exit)
                     return -1;
 
+                if (string.IsNullOrEmpty(Options.DeviceId))
+                    throw new ApplicationException("Please use --device to specify which camera to use");
+
                 //
                 // Load model
                 //
 
-                ScoringModel __model = null;
+                ScoringModel model = null;
                 await BlockTimer($"Loading modelfile '{Options.ModelPath}' on the '{_deviceName}' device",
                     async () => {
                         var d = Directory.GetCurrentDirectory();
                         var path = d + "\\" + Options.ModelPath;
-                        StorageFile modelFile = AsyncHelper(StorageFile.GetFileFromPathAsync(path));
-                        __model = await ScoringModel.CreateFromStreamAsync(modelFile);
+                        StorageFile modelFile = await AsAsync(StorageFile.GetFileFromPathAsync(path));
+                        model = await ScoringModel.CreateFromStreamAsync(modelFile);
                     });
 
+                //
+                // Load labels
+                //
+
+                var fileString = File.ReadAllText(_labelsFileName);
+                var fileDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(fileString);
+                labels = fileDict.Values.ToList();
 
                 //
                 // Init module client
@@ -81,71 +92,65 @@ namespace SampleModule
                 // Open camera
                 //
 
-                Camera camera = null;
-                if (!string.IsNullOrEmpty(Options.DeviceId))
+                using (var camera = new Camera())
                 {
                     (var group, var device) = Camera.Select(devices, Options.DeviceId, "Color");
+                    await camera.Open(group, device, Options.Verbose);
 
-                    using (camera = new Camera())
+                    //
+                    // Main loop
+                    //
+
+                    do
                     {
-                        await camera.Open(group, device, Options.Verbose);
-
                         //
-                        // Main loop
+                        // Pull image from camera
                         //
 
-                        do
-                        {
-                            //
-                            // Pull image from camera
-                            //
+                        VideoFrame inputImage = null;
+                        await BlockTimer($"Retrieving image from camera",
+                            async () =>
+                            {
+                                var frame = await camera.GetFrame();
+                                inputImage = frame.VideoMediaFrame.GetVideoFrame();
+                            });
 
-                            VideoFrame inputImage = null;
-                            await BlockTimer($"Retrieving image from camera",
-                                async () =>
-                                {
-                                    var frame = await camera.GetFrame();
-                                    inputImage = frame.VideoMediaFrame.GetVideoFrame();
-                                });
+                        ImageFeatureValue imageTensor = ImageFeatureValue.CreateFromVideoFrame(inputImage);
 
-                            ImageFeatureValue imageTensor = ImageFeatureValue.CreateFromVideoFrame(inputImage);
+                        //
+                        // Evaluate model
+                        //
 
-                            //
-                            // Evaluate model
-                            //
+                        ScoringOutput outcome = null;
+                        await BlockTimer("Running the model",
+                            async () =>
+                            {
+                                var input = new ScoringInput() { data_0 = imageTensor };
+                                outcome = await model.EvaluateAsync(input);
+                            });
 
-                            ScoringOutput outcome = null;
-                            await BlockTimer("Running the model",
-                                async () =>
-                                {
-                                    var input = new ScoringInput() { data_0 = imageTensor };
-                                    outcome = await __model.EvaluateAsync(input);
-                                });
+                        //
+                        // Print results
+                        //
 
-                            //
-                            // Print results
-                            //
+                        var message = ResultsToMessage(outcome);
+                        var json = JsonConvert.SerializeObject(message);
+                        Console.WriteLine($"{DateTime.Now.ToLocalTime()} Recognized: {json}");
 
-                            var resultVector = outcome.softmaxout_1.GetAsVectorView();
-                            var message = ResultsToMessage(resultVector);
-                            var dataBuffer = JsonConvert.SerializeObject(message);
-                            Console.WriteLine($"{DateTime.Now.ToLocalTime()} Sending: {dataBuffer}");
+                        //
+                        // Send results to Edge
+                        //
 
-                            //
-                            // Send results to Edge
-                            //
+                        if (Options.UseEdge)
+                        { 
+                            var eventMessage = new Message(Encoding.UTF8.GetBytes(json));
+                            await ioTHubModuleClient.SendEventAsync("resultsOutput", eventMessage); 
 
-                            if (Options.UseEdge)
-                            { 
-                                var eventMessage = new Message(Encoding.UTF8.GetBytes(dataBuffer));
-                                await ioTHubModuleClient.SendEventAsync("resultsOutput", eventMessage); 
-
-                                // Let's not totally spam Edge :)
-                                await Task.Delay(500);
-                            }
+                            // Let's not totally spam Edge :)
+                            await Task.Delay(500);
                         }
-                        while (Options.RunForever && ! cts.Token.IsCancellationRequested);
                     }
+                    while (Options.RunForever && ! cts.Token.IsCancellationRequested);
                 }
 
                 return 0;
@@ -157,24 +162,10 @@ namespace SampleModule
             }
         }
         
-        private static T AsyncHelper<T> (IAsyncOperation<T> operation) 
+        private static MessageBody ResultsToMessage(ScoringOutput outcome)
         {
-            AutoResetEvent waitHandle = new AutoResetEvent(false);
-            operation.Completed = new AsyncOperationCompletedHandler<T>((op, status) =>
-            {
-                waitHandle.Set();
-            });
-            waitHandle.WaitOne();
-            return operation.GetResults();
-        }
-
-        private static MessageBody ResultsToMessage(IReadOnlyList<float> resultVector)
-        {
-            // Parse labels from label json file.  We know the file's entries are already sorted in order.
-            var fileString = File.ReadAllText(_labelsFileName);
-            var fileDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(fileString);
-            var labels = fileDict.Values.ToList();
-
+            var resultVector = outcome.softmaxout_1.GetAsVectorView();
+            
             // Find the top 3 probabilities
             List<float> topProbabilities = new List<float>() { 0.0f, 0.0f, 0.0f };
             List<int> topProbabilityLabelIndexes = new List<int>() { 0, 0, 0 };
@@ -228,6 +219,6 @@ namespace SampleModule
             var tcs = new TaskCompletionSource<bool>();
             cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).SetResult(true), tcs);
             return tcs.Task;
-}
+        }
     }
 }

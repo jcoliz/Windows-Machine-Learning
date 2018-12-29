@@ -179,8 +179,8 @@ namespace SampleModule
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
-                    reader.Dispose();
-                    capture.Dispose();
+                    reader?.Dispose();
+                    capture?.Dispose();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
