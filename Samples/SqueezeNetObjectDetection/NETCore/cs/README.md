@@ -3,7 +3,7 @@
 This is a sample module showing how to run Windows ML inferencing in an Azure IoT Edge module running on Windows. 
 Images are supplied by a connected camera, inferenced against the SqueezeNet model, and sent to IoT Hub.
 
-This sample is derived from the 
+It is derived from the 
 [NetCore SqueezeNetObjectDetection](https://github.com/Microsoft/Windows-Machine-Learning/tree/master/Samples/SqueezeNetObjectDetection/NETCore/cs) sample published in the [Windows ML Repo](https://github.com/Microsoft/Windows-Machine-Learning).
 
 ## Prerequisites
@@ -230,25 +230,38 @@ The ACR_IMAGE must exactly match what you pushed, e.g. jcoliz.azurecr.io/squeeze
             "squeezenet": {
             "settings": {
               "image": "{ACR_IMAGE}",
-                "createOptions": "{\"HostConfig\":{\"Devices\":[{\"CgroupPermissions\":\"\",\"PathInContainer\":\"\",\"PathOnHost\":\"class/E5323777-F976-4f5b-9B55-B94699C46E44\"},{\"CgroupPermissions\":\"\",\"PathInContainer\":\"\",\"PathOnHost\":\"class/5B45201D-F2F2-4F3B-85BB-30FF1F953599\"}]}}"
+              "createOptions": "{\"HostConfig\":{\"Devices\":[{\"CgroupPermissions\":\"\",\"PathInContainer\":\"\",\"PathOnHost\":\"class/E5323777-F976-4f5b-9B55-B94699C46E44\"},{\"CgroupPermissions\":\"\",\"PathInContainer\":\"\",\"PathOnHost\":\"class/5B45201D-F2F2-4F3B-85BB-30FF1F953599\"}],\"Isolation\":\"Process\"}}"
             }
           }
 ```
 
-## Deploy
+## Deploy edge modules to device
 
 Back on your development machine, you can now deploy this deployment.json file to your device.
 For reference, please see [Deploy Azure IoT Edge modules from Visual Studio Code](https://docs.microsoft.com/en-us/azure/iot-edge/how-to-deploy-modules-vscode)
 
-## Verify
+## Verify device messages
 
-Using the Azure IoT Edge extension for Visual Studio Code, you can select your device and choose "Start Monitoring D2C Message". You should see this:
+Using the Azure IoT Edge extension for Visual Studio Code, you can select your device and choose "Start Monitoring D2C Message". You should see lines like this:
 
 ```
-[IoTHubMonitor] [4:04:43 PM] Message received from [jcoliz-preview/squeezenet]:
-{"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
-[IoTHubMonitor] [4:04:44 PM] Message received from [jcoliz-preview/squeezenet]:
-{"results":[{"label":"coffee mug","confidence":0.960289478302002},{"label":"cup","confidence":0.035979188978672028},{"label":"water jug","confidence":6.35452670394443E-05}]}
+[IoTHubMonitor] [4:23:39 PM] Message received from [jcoliz-17763-M/squeezenet]:
+{
+  "results": [
+    {
+      "label": "magnetic compass",
+      "confidence": 0.33018141984939575
+    },
+    {
+      "label": "teapot",
+      "confidence": 0.0806143507361412
+    },
+    {
+      "label": "abacus",
+      "confidence": 0.07737095654010773
+    }
+  ]
+}
 ```
 
 From a command prompt on the device, you can also check the logs for the module itself.
@@ -258,10 +271,10 @@ First, find the module container:
 ```
 [192.168.1.120]: PS C:\Data> docker ps
 
-CONTAINER ID        IMAGE                                                                           COMMAND                  CREATED              STATUS              PORTS                                                                  NAMES
-b4107d30a29d        {ACR_NAME}.azurecr.io/squeezenet:1.0.2-x64                                       "SqueezeNetObjectDetectionNC.exe -rt…"   About a minute ago   Up About a minute                                                                          squeezenet
-56170371f8f5        edgeshared.azurecr.io/microsoft/azureiotedge-hub:1809_insider-windows-x64     "dotnet Microsoft.Az…"   3 days ago           Up 6 minutes        0.0.0.0:443->443/tcp, 0.0.0.0:5671->5671/tcp, 0.0.0.0:8883->8883/tcp   edgeHub
-27c147e5c760        edgeshared.azurecr.io/microsoft/azureiotedge-agent:1809_insider-windows-x64   "dotnet Microsoft.Az…"   3 days ago           Up 7 minutes                                                                               edgeAgent
+CONTAINER ID        IMAGE                                      COMMAND                  CREATED             STATUS              PORTS                                                                  NAMES
+a7e9af84e551        {ACR_NAME}.azurecr.io/squeezenet:1.0.3-x64 "SqueezeNetObjectDet…"   7 minutes ago       Up 6 minutes                                                                               squeezenet
+cd5f1d7873d6        mcr.microsoft.com/azureiotedge-hub:1.0     "dotnet Microsoft.Az…"   31 minutes ago      Up 6 minutes        0.0.0.0:443->443/tcp, 0.0.0.0:5671->5671/tcp, 0.0.0.0:8883->8883/tcp   edgeHub
+73964eeb52cf        mcr.microsoft.com/azureiotedge-agent:1.0   "dotnet Microsoft.Az…"   35 minutes ago      Up 7 minutes                                                                               edgeAgent
 ```
 
 Then, use the ID for the squeezenet container to check the logs
