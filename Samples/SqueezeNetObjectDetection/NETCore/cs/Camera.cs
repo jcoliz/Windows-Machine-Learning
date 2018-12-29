@@ -82,6 +82,9 @@ namespace SampleModule
                 Log.WriteLine("Enumerating Frame Sources");
             await AsAsync(capture.InitializeAsync(init));
 
+            // This await above has been giving me trouble.
+            await Task.Delay(500);
+
             if (verbose)
                 Log.WriteLine("capture initialized");
 
